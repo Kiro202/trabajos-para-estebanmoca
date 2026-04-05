@@ -13,17 +13,17 @@ sudoku = [
     [0,0,0, 0,8,0, 0,7,9],
 ] #varios ejemplos de sudoku a resolver
 sudoku2 = [
-    [0,0,0, 0,2,4, 0,0,0],
-    [8,7,0, 0,1,3, 0,5,9],
-    [9,0,0, 0,8,0, 0,0,6],
+    [0,6,0, 1,0,4, 0,5,0],
+    [0,0,8, 3,0,5, 6,0,0],
+    [2,0,0, 0,0,0, 0,0,1],
 
-    [7,5,0, 0,3,0, 0,0,0],
-    [2,9,6, 0,0,0, 5,3,8],
-    [0,0,0, 0,6,0, 0,2,7],
+    [8,0,0, 4,0,7, 0,0,6],
+    [0,0,6, 0,0,0, 3,0,0],
+    [7,0,0, 9,0,1, 0,0,4],
 
-    [3,0,0, 0,7,0, 0,0,1],
-    [6,4,0, 3,5,0, 0,7,2],
-    [0,0,0, 4,9,0, 0,0,0],
+    [5,0,0, 0,0,0, 0,0,2],
+    [0,0,7, 2,0,6, 9,0,0],
+    [0,4,0, 5,0,8, 0,7,0],
 ]
 def comprobador_de_posicion(sudoku,numero,posicion_x,posicion_y):
     #comprobar las filas
@@ -56,7 +56,7 @@ def mostrar_pantalla(sudoku,contador):
     for fila in sudoku:
         print(fila)
     input(f"numero de vuletas: {contador}\nEnter para la siguiente vuelta")
-def tecnica_tanteo(sudoku,contador=1,repetir=True): #cuenta todas las posibiliades en una posicion si solo queda una entonces la pone
+def tecnica_tanteo(sudoku,contador=1,repetir=False): #cuenta todas las posibiliades en una posicion si solo queda una entonces la pone
     for posicion_y in range(0,len(sudoku)): #hacemos que pase por todas las filas y columnas
         for posicion_x in range(0,len(sudoku)):
             if sudoku[posicion_y][posicion_x]==0: #buscamos un espacio vacio
@@ -77,6 +77,8 @@ def tecnica_tanteo(sudoku,contador=1,repetir=True): #cuenta todas las posibiliad
         for posicion_x in range(0,len(sudoku)):
             organizador_de_repeticion(sudoku,posicion_y,posicion_x)
     for posicion_y in range(0,len(sudoku)): # para quitar las posibilidades y volver a empezar el tanteo
+        if repetir:
+            break
         for posicion_x in range(0,len(sudoku)):
             if sudoku[posicion_y][posicion_x]==0:
                 repetir=True
