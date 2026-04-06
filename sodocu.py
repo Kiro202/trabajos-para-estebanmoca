@@ -1,5 +1,189 @@
 import math
-sudoku = [
+#paso uno definir dominio, restriciones y variables
+#variables= Celdas vacias
+#dominio= 1,2,3,4,5,6,7,8,9
+#restriciones= sin numeros repedis por fila, columna y cuadrante
+
+import math
+
+class Suduku:
+    def __init__(self, sudoku, contador=0,ac=0):
+        self.sudoku = sudoku
+        self.contador = contador
+        self.ac=ac
+
+    def mostrar_tablero(self):
+        for filas in self.sudoku:
+            print(filas)
+        print(f"receunto de recursividad usada en este proceso: {self.contador}")
+
+    def mostrar_tablero_con_pausas(self):
+        for filas in self.sudoku:
+            print(filas)
+        print(f"receunto de recursividad usada en este proceso: {self.contador}")
+        input("Enter para continuar: ")
+
+    def Comprobador_de_restricciones(self, x, y, numero):
+        for numero_en_fila in self.sudoku[y]:
+            if numero_en_fila == numero:
+                return False
+
+        for fila in range(len(self.sudoku)):
+            if self.sudoku[fila][x] == numero:
+                return False
+
+        cuadrante_x = (x // 3) * 3
+        cuadrante_y = (y // 3) * 3
+
+        for i in range(cuadrante_y, cuadrante_y + 3):
+            for j in range(cuadrante_x, cuadrante_x + 3):
+                if self.sudoku[i][j] == numero:
+                    return False
+
+        return True
+
+    def Bc_simple(self, pausas=False):
+        self.contador=self.contador+1
+        for y in range(9):
+            for x in range(9):
+                if self.sudoku[y][x] == 0:
+                    for numero in range(1, 10):
+                        if self.Comprobador_de_restricciones(x, y, numero):
+                            self.sudoku[y][x] = numero
+                            if pausas:
+                                self.mostrar_tablero_con_pausas()
+                            if self.Bc_simple(pausas):
+                                return True
+                            self.sudoku[y][x] = 0
+                    return False
+        return True
+    #hasta aqui va lo sentillo
+
+    def comprobador_de_posibles_dominios(self, x, y):
+        dominios = []
+        for numero in range(1, 10):
+            if self.Comprobador_de_restricciones(x, y, numero):
+                dominios.append(numero)
+        return dominios
+
+    def Ubicaciones_celdas_vacias_con_posibilidades(self):
+        celdas_vacias = {}
+        for y in range(9):
+            for x in range(9):
+                if self.sudoku[y][x] == 0:
+                    celdas_vacias[(x, y)] = self.comprobador_de_posibles_dominios(x, y)
+        return celdas_vacias
+
+    def ordenar_celdas_vasias_por_porsivilidades(self, celdas):
+        puestos = []
+        for (x, y), posibilidades in celdas.items():
+            puestos.append([y, x, posibilidades])
+
+        puestos.sort(key=lambda celda: len(celda[2]))
+        return puestos
+
+    def Bc_intermedio(self, pausas=False):
+        celdas_vacias = self.Ubicaciones_celdas_vacias_con_posibilidades()
+        celdas_vacias_ordenadas = self.ordenar_celdas_vasias_por_porsivilidades(celdas_vacias)
+
+        def backtracking(celdas):
+            if not celdas:
+                return True
+            self.contador=self.contador+1
+            celda = celdas[0]
+            y = celda[0]
+            x = celda[1]
+            posibilidades = celda[2]
+
+            for numero in posibilidades:
+                if self.Comprobador_de_restricciones(x, y, numero):
+                    self.sudoku[y][x] = numero
+
+                    if pausas:
+                        print(f"{x},{y} -> {numero}")
+                        self.mostrar_tablero_con_pausas()
+
+                    if backtracking(celdas[1:]):
+                        return True
+
+                    self.sudoku[y][x] = 0
+
+            return False
+
+        return backtracking(celdas_vacias_ordenadas)
+    #ahora el nivel mas dificil
+    def Bv_dificil(self,pausas=False):
+        celdas_vacias = self.Ubicaciones_celdas_vacias_con_posibilidades()
+        celdas_vacias_ordenadas = self.ordenar_celdas_vasias_por_porsivilidades(celdas_vacias)
+        celds_vacias_limpias=self.ac_3(celdas_vacias_ordenadas)
+        if celds_vacias_limpias is None:
+            return False
+        def backtracking(celdas):
+            if not celdas:
+                return True
+            self.contador=self.contador+1
+            celda = celdas[0]
+            y = celda[0]
+            x = celda[1]
+            posibilidades = celda[2]
+
+            for numero in posibilidades:
+                if self.Comprobador_de_restricciones(x, y, numero):
+                    self.sudoku[y][x] = numero
+
+                    if pausas:
+                        print(f"{x},{y} -> {numero}")
+                        self.mostrar_tablero_con_pausas()
+
+                    if backtracking(celdas[1:]):
+                        return True
+
+                    self.sudoku[y][x] = 0
+
+            return False
+
+        return backtracking(celds_vacias_limpias)
+    #Ac_3 significa que si, un elemento cambio, podemos descaras las posibilidades del resto de una vez, y si solo 
+    # hay un elemento pues este elemento sera escojido... hay varios nivel de complejidad que podria uno usar... pero
+    #aqui somos machos y son las 10 de la noche... voy a elejir el peor y mas dificil y luego me hecho un lolsito
+
+    def ac_3(self, celdas):
+        cambio = True
+
+        while cambio:
+            cambio = False
+
+            for elemento in celdas:
+                if len(elemento[2]) == 1:
+                    valor = elemento[2][0]
+                    y, x = elemento[0], elemento[1]
+
+                    self.sudoku[y][x] = valor
+
+                    for vecino in celdas:
+                        if vecino == elemento:
+                            continue
+
+                        vy, vx = vecino[0], vecino[1]
+
+                        if (vy == y or vx == x or 
+                            ((vy // 3 == y // 3) and (vx // 3 == x // 3))):
+
+                            if valor in vecino[2]:
+                                vecino[2].remove(valor)
+                                cambio = True
+                                self.ac=self.ac+1
+
+                                if len(vecino[2]) == 0:
+                                    return None
+        print(f"ac3 limpio {self.ac} celdas")
+        return celdas    
+def copiar_tablero(tablero):
+    return [fila[:] for fila in tablero]                  
+    
+
+
+ejemplo= [
     [5,3,0, 0,7,0, 0,0,0],
     [6,0,0, 1,9,5, 0,0,0],
     [0,9,8, 0,0,0, 0,6,0],
@@ -10,86 +194,90 @@ sudoku = [
 
     [0,6,0, 0,0,0, 2,8,0],
     [0,0,0, 4,1,9, 0,0,5],
-    [0,0,0, 0,8,0, 0,7,9],
-] #varios ejemplos de sudoku a resolver
-sudoku2 = [
-    [0,6,0, 1,0,4, 0,5,0],
-    [0,0,8, 3,0,5, 6,0,0],
-    [2,0,0, 0,0,0, 0,0,1],
+    [0,0,0, 0,8,0, 0,7,9]]
+sudoku_dificil = [
+    [0,0,0, 0,0,0, 0,1,2],
+    [0,0,0, 0,3,5, 0,0,0],
+    [0,0,0, 7,0,0, 0,0,0],
 
-    [8,0,0, 4,0,7, 0,0,6],
-    [0,0,6, 0,0,0, 3,0,0],
-    [7,0,0, 9,0,1, 0,0,4],
+    [0,0,0, 0,0,0, 3,0,0],
+    [0,0,1, 0,8,0, 5,0,0],
+    [0,0,9, 0,0,0, 0,0,0],
 
-    [5,0,0, 0,0,0, 0,0,2],
-    [0,0,7, 2,0,6, 9,0,0],
-    [0,4,0, 5,0,8, 0,7,0],
+    [0,0,0, 0,0,9, 0,0,0],
+    [0,0,0, 1,2,0, 0,0,0],
+    [8,4,0, 0,0,0, 0,0,0]
 ]
-def comprobador_de_posicion(sudoku,numero,posicion_x,posicion_y):
-    #comprobar las filas
-    for posicion_fila in sudoku[posicion_y-1]: 
-        if posicion_fila==numero:
-            print(f"el numero {numero} ya se encuentra en fila")
-            return False
-    #comprobar columnas,
-    for posicion_columna in range(len(sudoku)):# 9 porque es el y dfel soducu
-        if sudoku[posicion_columna][posicion_x-1]==numero:
-            print(f"el numero {numero} ya se encuentra en columna")
-            return False
-    #comprobador de cuadrantes
-    cuadrante_x=math.floor((posicion_x-1)/3)
-    cuadrante_y=math.floor((posicion_y-1)/3)
-    for i in range(cuadrante_y*3,cuadrante_y*3+3):
-        for ii in range(cuadrante_x*3,cuadrante_x*3+3):
-            if sudoku[i][ii]==numero:
-                print(f"el numero {numero} ya se encuentra en cuadrante")
-                return False
-    print(f"sin nunguna coincidencia {numero}")
-    return True
-def organizador_de_repeticion(sudoku,y,x):
-    try: 
-        if len(sudoku[y][x]):
-            sudoku[y][x]=0
-    except:
-        None
-def mostrar_pantalla(sudoku,contador):
-    for fila in sudoku:
-        print(fila)
-    input(f"numero de vuletas: {contador}\nEnter para la siguiente vuelta")
-def tecnica_tanteo(sudoku,contador=1,repetir=False): #cuenta todas las posibiliades en una posicion si solo queda una entonces la pone
-    for posicion_y in range(0,len(sudoku)): #hacemos que pase por todas las filas y columnas
-        for posicion_x in range(0,len(sudoku)):
-            if sudoku[posicion_y][posicion_x]==0: #buscamos un espacio vacio
-                sudoku[posicion_y][posicion_x]=[] #lo combertimos en una lista vacia, 
-                #para meter todas las probabilidades
-                for numero in range(1,10): #comprobamos todos los numero
-                    if comprobador_de_posicion(sudoku,numero,posicion_x+1,posicion_y+1)==True: 
-                        #miramos si el numero tiene chances
-                        sudoku[posicion_y][posicion_x].append(numero) #metemos el numero en esa probabilidad
-        for posibilidades in range(0,len(sudoku)): # creo que es mejro que lo haga por fila porque por columa 
-            #serian mas vueltas
-            try: #evitar error al sacarle len() a un numero "5" en vez de a una lista
-                if len(sudoku[posicion_y][posibilidades])==1: #si solo hay una posibilidad
-                    sudoku[posicion_y][posibilidades]=sudoku[posicion_y][posibilidades][0]
-                    #combertimos esa posibilidad en una realidad
-            except: continue #que siga si encuentra un numero en vez de una lista
-    for posicion_y in range(0,len(sudoku)): # para quitar las posibilidades y volver a empezar el tanteo
-        for posicion_x in range(0,len(sudoku)):
-            organizador_de_repeticion(sudoku,posicion_y,posicion_x)
-    for posicion_y in range(0,len(sudoku)): # para quitar las posibilidades y volver a empezar el tanteo
-        if repetir:
-            break
-        for posicion_x in range(0,len(sudoku)):
-            if sudoku[posicion_y][posicion_x]==0:
-                repetir=True
-                break
+sudoku_muy_dificil = [
+    [0,0,0, 0,0,0, 0,0,0],
+    [0,0,0, 0,0,3, 0,8,5],
+    [0,0,1, 0,2,0, 0,0,0],
+
+    [0,0,0, 5,0,7, 0,0,0],
+    [0,0,4, 0,0,0, 1,0,0],
+    [0,9,0, 0,0,0, 0,0,0],
+
+    [5,0,0, 0,0,0, 0,7,3],
+    [0,0,2, 0,1,0, 0,0,0],
+    [0,0,0, 0,4,0, 0,0,9]
+]
+sudoku_infernal = [
+    [0,0,0, 0,0,0, 0,0,1],
+    [4,0,0, 0,0,0, 0,0,0],
+    [0,2,0, 0,0,0, 0,0,0],
+
+    [0,0,0, 0,5,0, 4,0,7],
+    [0,0,8, 0,0,0, 3,0,0],
+    [0,0,1, 0,9,0, 0,0,0],
+
+    [3,0,0, 4,0,0, 2,0,0],
+    [0,5,0, 1,0,0, 0,0,0],
+    [0,0,0, 8,0,6, 0,0,0]
+]
+def menu():
+    while True:
+        print("\n===== SOLVER SUDOKU =====")
+        print("1. Resolver con Backtracking Simple")
+        print("2. Resolver con MRV (Intermedio)")
+        print("3. Resolver con AC-3 + Backtracking (Difícil)")
+        print("4. Salir")
+
+        opcion = input("Elige una opción: ")
+
+        if opcion == "1":
+            print("\n--- Modo Simple ---")
+            sudoku = copiar_tablero(ejemplo)
+            pollo = Suduku(sudoku)
+
+            if pollo.Bc_simple():
+                pollo.mostrar_tablero()
             else:
-                repetir=False
-    if repetir:
-        mostrar_pantalla(sudoku,contador)
-        tecnica_tanteo(sudoku,contador+1)
-    else:
-        mostrar_pantalla(sudoku,contador)
+                print("No tiene solución")
 
+        elif opcion == "2":
+            print("\n--- Modo Intermedio (MRV) ---")
+            sudoku = copiar_tablero(ejemplo)
+            pollo = Suduku(sudoku)
 
-tecnica_tanteo(sudoku2) #aqui pones el sudoku que quieres resolver
+            if pollo.Bc_intermedio():
+                pollo.mostrar_tablero()
+            else:
+                print("No tiene solución")
+
+        elif opcion == "3":
+            print("\n--- Modo Difícil (AC-3 + Backtracking) ---")
+            sudoku = copiar_tablero(ejemplo)
+            pollo = Suduku(sudoku)
+
+            if pollo.Bv_dificil():
+                pollo.mostrar_tablero()
+            else:
+                pollo.mostrar_tablero()
+
+        elif opcion == "4":
+            print("Saliendo...")
+            break
+
+        else:
+            print("Opción inválida, intenta de nuevo")
+menu()
